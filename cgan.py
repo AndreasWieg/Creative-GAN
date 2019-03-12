@@ -43,54 +43,54 @@ class CGAN(object):
 
 			x = tf.layers.dense(x,1024,activation=tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="gan_input_layer")
 			x = tf.nn.relu(x)
-			tf.layers.batch_normalization(x)
+			x = tf.layers.batch_normalization(x)
 			x = tf.reshape(x, [-1, 1, 1, 1024])
-			x = tf.layers.conv2d_transpose(x,filters=512,kernel_size=5,strides=2,padding='SAME',name="gan_deconv_1")
+			#size 5 output_size = strides * (input_size-1) + kernel_size - 2*padding padding = valid padding = 0
+			x = tf.layers.conv2d_transpose(x,filters=512,kernel_size=5,strides=2,padding='valid',name="gan_deconv_1")
 			x = tf.nn.relu(x)
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d_transpose(x,filters=256,kernel_size=5,strides=2,padding='SAME',name="gan_deconv_2")
+			x = tf.layers.batch_normalization(x)
+			#size 13
+			x = tf.layers.conv2d_transpose(x,filters=256,kernel_size=5,strides=2,padding='valid',name="gan_deconv_2")
 			x = tf.nn.relu(x)
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d_transpose(x,filters=128,kernel_size=5,strides=2,padding='SAME',name="gan_deconv_3")
+			x = tf.layers.batch_normalization(x)
+			#size 29
+			x = tf.layers.conv2d_transpose(x,filters=128,kernel_size=5,strides=2,padding='valid',name="gan_deconv_3")
 			x = tf.nn.relu(x)
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d_transpose(x,filters=64,kernel_size=5,strides=2,padding='SAME',name="gan_deconv_4")
+			x = tf.layers.batch_normalization(x)
+			#size 61
+			x = tf.layers.conv2d_transpose(x,filters=64,kernel_size=5,strides=2,padding='valid',name="gan_deconv_4")
 			x = tf.nn.relu(x)
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d_transpose(x,filters=32,kernel_size=5,strides=2,padding='SAME',name="gan_deconv_5")
+			x = tf.layers.batch_normalization(x)
+			#size 125
+			x = tf.layers.conv2d_transpose(x,filters=3,kernel_size=8,strides=2,padding='valid',name="gan_deconv_5")
 			x = tf.nn.relu(x)
-			tf.layers.batch_normalization(x)
-			X = tf.layers.conv2d_transpose(x,filters=128,kernel_size=5,strides=2,padding='SAME',name="gan_deconv_6")
-			x = tf.nn.relu(x)
-
+			x = tf.layers.batch_normalization(x)
 			x = tf.tanh(x)
+			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
 		return x
 
 
 	def discriminator(self,x,reuse=False):
-		with tf.variable_scope("discriminator") as scope:
-			if reuse:
-				scope.reuse_variables()
-			x = tf.reshape(x,[-1,self.image_size,self.image_size,3])
-			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_1",reuse=tf.AUTO_REUSE)
+		with tf.variable_scope("discriminator" ,reuse=reuse):
+			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
+			x = tf.layers.conv2d(x,filters=128,kernel_size=5,padding='valid',strides=(2,2),activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="conv_1")
+			#tf.layers.batch_normalization(x)
+			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_2")
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_2",reuse=tf.AUTO_REUSE)
+			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_3")
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_3",reuse=tf.AUTO_REUSE)
+			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_4")
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_4",reuse=tf.AUTO_REUSE)
+			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_5")
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_5",reuse=tf.AUTO_REUSE)
-			tf.layers.batch_normalization(x)
-
 			x = tf.layers.flatten(x)
 			x = tf.layers.dense(x,1,activation=tf.nn.sigmoid,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="disc_output")
 
 		return x
 
 	def build_network(self):
-		eps = 1e-12
-		self.input = tf.placeholder(tf.float32, [None,self.image_size,self.image_size,3], name="real_pointcloud_data")
+
+		self.input = tf.placeholder(tf.float32, [self.batch_size,self.image_size,self.image_size,3], name="real_art_picture")
 		self.z = tf.placeholder(tf.float32,[None,self.z_dim], name ="noice")
 		self.Gen = self.generator(self.z)
 		self.Dis_real = self.discriminator(self.input,reuse = False)
@@ -156,8 +156,9 @@ class CGAN(object):
 				epoch_loss_g = 0.
 				self.training_data = shuffle_data(self.training_data)
 				for i in range(0,k):
-					self.batch_z = np.random.uniform(0, 0.2, [self.batch_size, self.z_dim])
+					self.batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim])
 					self.batch = self.training_data[i*self.batch_size:(i+1)*self.batch_size]
+					self.batch = np.asarray(self.batch)
 					_, loss_d_val,loss_d = sess.run([self.d_optim,self.d_loss,self.summary_d_loss],feed_dict={self.input: self.batch, self.z: self.batch_z})
 					train_writer.add_summary(loss_d,self.counter)
 					_, loss_g_val,loss_g = sess.run([self.g_optim,self.g_loss,self.summary_g_loss],feed_dict={self.z: self.batch_z, self.input: self.batch})
@@ -174,8 +175,8 @@ class CGAN(object):
 				if e % 10 == 0:
 					#save_path = self.saver.save(sess,"C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt",global_step=e)
 					#print("model saved: %s" %save_path)
-					self.gen_noise = np.random.uniform(0, 0.2, [1, self.z_dim])
-					fake_art = sess.run([self.Gen], feed_dict={self.z: [self.gen_noise]})
+					self.gen_noise = np.random.uniform(-1, 1, [1, self.z_dim])
+					fake_art = sess.run([self.Gen], feed_dict={self.z: self.gen_noise})
 					save_image(fake_art,self.name_art,test_counter)
 
 					test_counter +=1
