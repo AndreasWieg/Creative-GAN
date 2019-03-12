@@ -9,7 +9,7 @@ import sys
 flags = tf.app.flags
 
 flags.DEFINE_integer("epochs",1000,"epochs per trainingstep")
-flags.DEFINE_float("learning_rate",0.00005,"learning rate for the model")
+flags.DEFINE_float("learning_rate",0.0001,"learning rate for the model")
 flags.DEFINE_integer("image_size",128,"Image size of the input")
 flags.DEFINE_bool("training",True,"running training of the poincloud gan")
 flags.DEFINE_string("checkpoint_dir","C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/","where to save the model")

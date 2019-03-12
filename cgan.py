@@ -42,29 +42,27 @@ class CGAN(object):
 		with tf.variable_scope("generator") as scope:
 
 			x = tf.layers.dense(x,1024,activation=tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="gan_input_layer")
-			x = tf.nn.relu(x)
+			x = tf.nn.leaky_relu(x)
 			x = tf.layers.batch_normalization(x)
 			x = tf.reshape(x, [-1, 1, 1, 1024])
 			#size 5 output_size = strides * (input_size-1) + kernel_size - 2*padding padding = valid padding = 0
 			x = tf.layers.conv2d_transpose(x,filters=512,kernel_size=5,strides=2,padding='valid',name="gan_deconv_1")
-			x = tf.nn.relu(x)
+			x = tf.nn.leaky_relu(x)
 			x = tf.layers.batch_normalization(x)
 			#size 13
 			x = tf.layers.conv2d_transpose(x,filters=256,kernel_size=5,strides=2,padding='valid',name="gan_deconv_2")
-			x = tf.nn.relu(x)
+			x = tf.nn.leaky_relu(x)
 			x = tf.layers.batch_normalization(x)
 			#size 29
 			x = tf.layers.conv2d_transpose(x,filters=128,kernel_size=5,strides=2,padding='valid',name="gan_deconv_3")
-			x = tf.nn.relu(x)
+			x = tf.nn.leaky_relu(x)
 			x = tf.layers.batch_normalization(x)
 			#size 61
 			x = tf.layers.conv2d_transpose(x,filters=64,kernel_size=5,strides=2,padding='valid',name="gan_deconv_4")
-			x = tf.nn.relu(x)
+			x = tf.nn.leaky_relu(x)
 			x = tf.layers.batch_normalization(x)
 			#size 125
 			x = tf.layers.conv2d_transpose(x,filters=3,kernel_size=8,strides=2,padding='valid',name="gan_deconv_5")
-			x = tf.nn.relu(x)
-			x = tf.layers.batch_normalization(x)
 			x = tf.tanh(x)
 			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
 		return x
