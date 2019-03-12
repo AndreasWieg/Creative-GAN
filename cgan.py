@@ -71,15 +71,16 @@ class CGAN(object):
 		with tf.variable_scope("discriminator") as scope:
 			if reuse:
 				scope.reuse_variables()
-			x = tf.layers.conv2d(x,filters=64,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_1")
+			x = tf.reshape(x,[-1,self.image_size,self.image_size,3])
+			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_1",reuse=tf.AUTO_REUSE)
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_2")
+			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_2",reuse=tf.AUTO_REUSE)
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_3")
+			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_3",reuse=tf.AUTO_REUSE)
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_4")
+			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_4",reuse=tf.AUTO_REUSE)
 			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_5")
+			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_5",reuse=tf.AUTO_REUSE)
 			tf.layers.batch_normalization(x)
 
 			x = tf.layers.flatten(x)
@@ -96,9 +97,9 @@ class CGAN(object):
 		self.Dis_generator = self.discriminator(self.Gen,reuse = True)
 
 		#Tensorboard variables
-		self.d_sum_real = tf.summary.histogram("d_real", self.Dis_encoder)
+		self.d_sum_real = tf.summary.histogram("d_real", self.Dis_real)
 		self.d_sum_fake = tf.summary.histogram("d_fake", self.Dis_generator)
-		self.Enc_sum = tf.summary.histogram("Enc", self.Enc)
+
 		self.G_sum = tf.summary.histogram("G",self.Gen)
 		self.z_sum = tf.summary.histogram("z_input",self.z)
 
@@ -108,7 +109,7 @@ class CGAN(object):
 
 
 		#Vanilla BI-GAN Loss
-		self.d_loss -tf.reduce_mean(tf.log(self.Dis_real) + tf.log(1. - self.Dis_generator))
+		self.d_loss = -tf.reduce_mean(tf.log(self.Dis_real) + tf.log(1. - self.Dis_generator))
 		self.g_loss = -tf.reduce_mean(tf.log(self.Dis_generator))
 
 		tf.summary.scalar('self.g_loss', self.g_loss )
@@ -132,7 +133,7 @@ class CGAN(object):
 			print("init_g_optim")
 			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1).minimize(self.d_loss,var_list = self.vars_D)
 
-			elf.init  = tf.global_variables_initializer()
+			self.init  = tf.global_variables_initializer()
 			self.config = tf.ConfigProto()
 			self.config.gpu_options.allow_growth = True
 
