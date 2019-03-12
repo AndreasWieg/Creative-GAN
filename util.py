@@ -4,10 +4,17 @@ import os
 import sys
 import re
 from PIL import Image
-import msvcrt as m
+'''
+________________________________________________________________________________
+Utilities for the Creative-GAN
+'''
+#save image
+def save_image(image,name,counter):
+    image = np.asarray(image)
+    image = Image.fromarray(image)
+    image.save(name + "%d" % counter)
 
-
-
+#resize image to a given size
 def resize_image(url,size):
     training_data = []
     for file in os.listdir(url):
@@ -17,11 +24,12 @@ def resize_image(url,size):
         training_data.append(a)
     return training_data
 
-
+#shuffle the data
 def shuffle_data(training_data):
      np.random.shuffle(training_data)
      return training_data
 
+#load training data from the directory
 def load_data_art():
     training_data = []
     counter = 1
@@ -34,12 +42,8 @@ def load_data_art():
                 a = np.asarray(image)
                 k = a.shape
                 print(k)
-                print(k[0])
                 l= k[0] // 8
                 w = k[1] //8
-                print(l)
-                print(w)
-
                 for j in range(0,8):
                     for i in range(0,8):
                         box=(1+(i*l),1+(j*w),(i+1)*l,(j+1)*w)
@@ -48,8 +52,4 @@ def load_data_art():
                 training_data = resize_image("C:/Users/Andreas/Desktop/C-GAN/new_data/",(128,128))
     else:
         training_data = resize_image("C:/Users/Andreas/Desktop/C-GAN/new_data/",(128,128))
-
     return training_data
-
-training_data = load_data_art()
-print(len(training_data))
