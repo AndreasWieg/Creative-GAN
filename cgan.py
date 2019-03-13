@@ -63,7 +63,7 @@ class CGAN(object):
 			x = tf.layers.batch_normalization(x)
 			#size 125
 			x = tf.layers.conv2d_transpose(x,filters=3,kernel_size=8,strides=2,padding='valid',name="gan_deconv_5")
-			x = tf.nn.relu(x)
+			x = tf.nn.tanh(x)
 			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
 		return x
 
@@ -144,6 +144,7 @@ class CGAN(object):
 			self.counter = 1
 			sess.run(self.init)
 			self.training_data = load_data_art()
+			print(self.training_data.shape)
 			k = (len(self.training_data) // self.batch_size)
 			self.start_time = time.time()
 			loss_g_val,loss_d_val = 0, 0

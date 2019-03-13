@@ -10,18 +10,13 @@ ________________________________________________________________________________
 Utilities for the Creative-GAN
 '''
 
-
 def inverse_norm_image(image):
-    image =  image*255
+    image = (np.array(image) -1.0) * 127.5
     image = image.astype("uint8")
     return image
-
 # normalize image between 0-1
 def norm_image(image):
-    image =  image/ 255
-    return image
-
-
+    return (np.array(image) / 127.5) - 1.0
 #save image
 def save_image(image,name,counter):
     image = np.asarray(image)
@@ -39,9 +34,6 @@ def resize_image(url,size):
         image = np.asarray(image)
         image = norm_image(image)
         training_data.append(image)
-
-
-
     return training_data
 
 #shuffle the data
