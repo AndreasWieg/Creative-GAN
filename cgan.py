@@ -63,7 +63,7 @@ class CGAN(object):
 			x = tf.layers.batch_normalization(x)
 			#size 125
 			x = tf.layers.conv2d_transpose(x,filters=3,kernel_size=8,strides=2,padding='valid',name="gan_deconv_5")
-			x = tf.tanh(x)
+			x = tf.nn.relu(x)
 			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
 		return x
 
