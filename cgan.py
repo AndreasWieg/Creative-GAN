@@ -41,28 +41,28 @@ class CGAN(object):
 	def generator(self,x):
 		with tf.variable_scope("generator") as scope:
 
-			x = tf.layers.dense(x,1024,activation=tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="gan_input_layer")
+			x = tf.layers.dense(x,1024,activation=None,name="gan_input_layer")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
-			x = tf.layers.batch_normalization(x)
 			x = tf.reshape(x, [-1, 1, 1, 1024])
 			#size 5 output_size = strides * (input_size-1) + kernel_size - 2*padding padding = valid padding = 0
-			x = tf.layers.conv2d_transpose(x,filters=512,kernel_size=5,strides=2,padding='valid',name="gan_deconv_1")
+			x = tf.layers.conv2d_transpose(x,filters=1024,kernel_size=5, kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='valid',name="gan_deconv_1")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
-			x = tf.layers.batch_normalization(x)
 			#size 13
-			x = tf.layers.conv2d_transpose(x,filters=256,kernel_size=5,strides=2,padding='valid',name="gan_deconv_2")
+			x = tf.layers.conv2d_transpose(x,filters=512,kernel_size=5,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='valid',name="gan_deconv_2")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
-			x = tf.layers.batch_normalization(x)
 			#size 29
-			x = tf.layers.conv2d_transpose(x,filters=128,kernel_size=5,strides=2,padding='valid',name="gan_deconv_3")
+			x = tf.layers.conv2d_transpose(x,filters=256,kernel_size=5,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='valid',name="gan_deconv_3")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
-			x = tf.layers.batch_normalization(x)
 			#size 61
-			x = tf.layers.conv2d_transpose(x,filters=64,kernel_size=5,strides=2,padding='valid',name="gan_deconv_4")
+			x = tf.layers.conv2d_transpose(x,filters=128,kernel_size=5,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='valid',name="gan_deconv_4")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
-			x = tf.layers.batch_normalization(x)
 			#size 125
-			x = tf.layers.conv2d_transpose(x,filters=3,kernel_size=8,strides=2,padding='valid',name="gan_deconv_5")
+			x = tf.layers.conv2d_transpose(x,filters=3,kernel_size=8,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='valid',name="gan_deconv_5")
 			x = tf.nn.tanh(x)
 			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
 		return x
@@ -71,16 +71,26 @@ class CGAN(object):
 	def discriminator(self,x,reuse=False):
 		with tf.variable_scope("discriminator" ,reuse=reuse):
 			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
-			x = tf.layers.conv2d(x,filters=128,kernel_size=5,padding='valid',strides=(2,2),activation = tf.nn.relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="conv_1")
-			#tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = tf.nn.leaky_relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_2")
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = tf.nn.leaky_relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_3")
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = tf.nn.leaky_relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_4")
-			tf.layers.batch_normalization(x)
-			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = tf.nn.leaky_relu,kernel_initializer=tf.contrib.layers.xavier_initializer(),strides=2,name="conv_5")
-			tf.layers.batch_normalization(x)
+			x = tf.layers.conv2d(x,filters=64,kernel_size=5,padding='valid',kernel_initializer=tf.glorot_normal_initializer(),strides=(2,2),activation = None,name="conv_1")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
+			x = tf.nn.leaky_relu(x)
+
+			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_2")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
+			x = tf.nn.leaky_relu(x)
+
+			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_3")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
+			x = tf.nn.leaky_relu(x)
+
+			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_4")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
+			x = tf.nn.leaky_relu(x)
+
+			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_5")
+			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
+			x = tf.nn.leaky_relu(x)
+
 			x = tf.layers.flatten(x)
 			x = tf.layers.dense(x,1,activation=tf.nn.sigmoid,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="disc_output")
 
@@ -171,7 +181,7 @@ class CGAN(object):
 				print("Loss of G: %f" % epoch_loss_g)
 				print("Epoch%d" %(e))
 
-				if e % 10 == 0:
+				if e % 1 == 0:
 					#save_path = self.saver.save(sess,"C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt",global_step=e)
 					#print("model saved: %s" %save_path)
 					self.gen_noise = np.random.uniform(-1, 1, [1, self.z_dim])

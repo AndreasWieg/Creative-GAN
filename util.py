@@ -51,7 +51,6 @@ def load_data_art():
         for file in os.listdir("C:/Users/Andreas/Desktop/C-GAN/art/"):
             if file.endswith('.jpg'):
                 image = Image.open(imagepath+file)
-                image = norm_image(image)
                 a = np.asarray(image)
                 k = a.shape
                 l= k[0] // 8
@@ -60,7 +59,7 @@ def load_data_art():
                     for i in range(0,8):
                         box=(1+(i*l),1+(j*w),(i+1)*l,(j+1)*w)
                         cropped_image = image.crop(box)
-                        cropped_image.save('C:/Users/Andreas/Desktop/C-GAN/new_data/%d_%s' % (i,file))
+                        cropped_image.save('C:/Users/Andreas/Desktop/C-GAN/new_data/%d_%d_%s' % (j,i,file))
                 training_data = resize_image("C:/Users/Andreas/Desktop/C-GAN/new_data/",(128,128))
     else:
         training_data = resize_image("C:/Users/Andreas/Desktop/C-GAN/new_data/",(128,128))
