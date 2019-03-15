@@ -12,6 +12,7 @@ learning the style of an artist and creating new paintings
 
 
 example of training data:
+Because there were not enough training data the paintings are cropped in little pieces 
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/example_training_data.jpg)
 
