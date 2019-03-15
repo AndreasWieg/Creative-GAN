@@ -10,6 +10,11 @@ learning the style of an artist and creating new paintings
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/Die%20Rebellion%20der%20Topfpflanzen.jpg)
 
+
+example of training data:
+
+![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/example_training_data.jpg)
+
 After 100 epochs:
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/100_epoch.jpg)
