@@ -37,15 +37,27 @@ class CGAN(object):
 		self.image_size = image_size
 		self.z_dim = z_dim
 		self.scaler = 10.0
+		self.save_epoch = 0
 		self.build_network()
+
+		with tf.variable_scope("adam",reuse=tf.AUTO_REUSE) as scope:
+			print("init_d_optim")
+			self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.g_loss,var_list = self.vars_G)
+			print("init_g_optim")
+			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.d_loss,var_list = self.vars_D)
+
+		self.init  = tf.global_variables_initializer()
+		self.config = tf.ConfigProto()
+		self.config.gpu_options.allow_growth = True
+		self.sess = tf.Session(config = self.config)
 
 	def generator(self,x):
 		with tf.variable_scope("generator") as scope:
 
-			x = tf.layers.dense(x,1024,activation=None,name="gan_input_layer")
-			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
-			x = tf.nn.leaky_relu(x)
-			x = tf.reshape(x, [-1, 1, 1, 1024])
+			#x = tf.layers.dense(x,1024,activation=None,name="gan_input_layer")
+			#x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
+			#x = tf.nn.leaky_relu(x)
+			x = tf.reshape(x, [-1, 1, 1,128])
 			#size 5 output_size = strides * (input_size-1) + kernel_size - 2*padding padding = valid padding = 0
 			x = tf.layers.conv2d_transpose(x,filters=1024,kernel_size=5, kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='valid',name="gan_deconv_1")
 			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
@@ -71,7 +83,6 @@ class CGAN(object):
 
 	def discriminator(self,x,reuse=False):
 		with tf.variable_scope("discriminator" ,reuse=reuse):
-
 
 			x = tf.layers.conv2d(x,filters=128,kernel_size=5,kernel_initializer=tf.glorot_normal_initializer(),strides=(2,2),padding='same',activation = None,name="conv_1")
 			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
@@ -146,25 +157,27 @@ class CGAN(object):
 		self.summary_g_loss = tf.summary.scalar("g_loss",self.g_loss)
 		self.summary_d_loss = tf.summary.scalar("d_loss",self.d_loss)
 
+
+	def save_model(self, iter_time):
+		model_name = 'model'
+		self.saver.save(self.sess, os.path.join(self.checkpoint_dir, model_name), global_step=iter_time)
+		print('=====================================')
+		print('             Model saved!            ')
+		print('=====================================\n')
+
 	def train(self):
-		with tf.variable_scope("adam",reuse=tf.AUTO_REUSE) as scope:
-			print("init_d_optim")
-			self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.g_loss,var_list = self.vars_G)
-			print("init_g_optim")
-			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.d_loss,var_list = self.vars_D)
-
-			self.init  = tf.global_variables_initializer()
-			self.config = tf.ConfigProto()
-			self.config.gpu_options.allow_growth = True
-
-		with tf.Session(config = self.config) as sess:
+		with self.sess:
+			if self.load_model():
+				print(' [*] Load SUCCESS!\n')
+			else:
+				print(' [!] Load Failed...\n')
 			#imported_meta = tf.train.import_meta_graph("C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt-4.meta")
 			#imported_meta.restore(sess, "C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt-4")
-			train_writer = tf.summary.FileWriter("./logs",sess.graph)
+			train_writer = tf.summary.FileWriter("./logs",self.sess.graph)
 			merged = tf.summary.merge_all()
 			#test_writer = tf.summary.FileWriter("C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/")
 			self.counter = 1
-			sess.run(self.init)
+			self.sess.run(self.init)
 			self.training_data = load_data_art()
 			print(self.training_data.shape)
 			k = (len(self.training_data) // self.batch_size)
@@ -180,9 +193,9 @@ class CGAN(object):
 					self.batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim])
 					self.batch = self.training_data[i*self.batch_size:(i+1)*self.batch_size]
 					self.batch = np.asarray(self.batch)
-					_, loss_d_val,loss_d = sess.run([self.d_optim,self.d_loss,self.summary_d_loss],feed_dict={self.input: self.batch, self.z: self.batch_z})
+					_, loss_d_val,loss_d = self.sess.run([self.d_optim,self.d_loss,self.summary_d_loss],feed_dict={self.input: self.batch, self.z: self.batch_z})
 					train_writer.add_summary(loss_d,self.counter)
-					_, loss_g_val,loss_g = sess.run([self.g_optim,self.g_loss,self.summary_g_loss],feed_dict={self.z: self.batch_z, self.input: self.batch})
+					_, loss_g_val,loss_g = self.sess.run([self.g_optim,self.g_loss,self.summary_g_loss],feed_dict={self.z: self.batch_z, self.input: self.batch})
 					train_writer.add_summary(loss_g,self.counter)
 					self.counter=self.counter + 1
 					epoch_loss_d += loss_d_val
@@ -192,13 +205,26 @@ class CGAN(object):
 				print("Loss of D: %f" % epoch_loss_d)
 				print("Loss of G: %f" % epoch_loss_g)
 				print("Epoch%d" %(e))
-
 				if e % 1 == 0:
-					#save_path = self.saver.save(sess,"C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt",global_step=e)
-					#print("model saved: %s" %save_path)
+					save_path = self.saver.save(self.sess,"C:/Users/Andreas/Desktop/C-GAN/checkpoint/model.ckpt",global_step=self.save_epoch)
+					print("model saved: %s" %save_path)
 					self.gen_noise = np.random.uniform(-1, 1, [1, self.z_dim])
-					fake_art = sess.run([self.Gen], feed_dict={self.z: self.gen_noise})
-					save_image(fake_art,self.name_art,test_counter)
-
-					test_counter +=1
+					fake_art = self.sess.run([self.Gen], feed_dict={self.z: self.gen_noise})
+					save_image(fake_art,self.name_art,self.save_epoch)
+					self.save_epoch += 1
 			print("training finished")
+
+	def load_model(self):
+		print(' [*] Reading checkpoint...')
+		ckpt = tf.train.get_checkpoint_state(self.checkpoint_dir)
+		if ckpt and ckpt.model_checkpoint_path:
+			ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+			self.saver.restore(self.sess, os.path.join(self.checkpoint_dir, ckpt_name))
+			meta_graph_path = ckpt.model_checkpoint_path + '.meta'
+			self.save_epoch = int(meta_graph_path.split('-')[-1].split('.')[0])
+			print('===========================')
+			print('   iter_time: {}'.format(self.save_epoch))
+			print('===========================')
+			return True
+		else:
+			return False
