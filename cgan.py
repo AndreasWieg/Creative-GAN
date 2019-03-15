@@ -36,6 +36,7 @@ class CGAN(object):
 		self.name_art = "fake_art"
 		self.image_size = image_size
 		self.z_dim = z_dim
+		self.scaler = 10.0
 		self.build_network()
 
 	def generator(self,x):
@@ -70,29 +71,31 @@ class CGAN(object):
 
 	def discriminator(self,x,reuse=False):
 		with tf.variable_scope("discriminator" ,reuse=reuse):
-			#x = tf.reshape(x,[self.batch_size,self.image_size,self.image_size,3])
-			x = tf.layers.conv2d(x,filters=64,kernel_size=5,padding='valid',kernel_initializer=tf.glorot_normal_initializer(),strides=(2,2),activation = None,name="conv_1")
+
+
+			x = tf.layers.conv2d(x,filters=128,kernel_size=5,kernel_initializer=tf.glorot_normal_initializer(),strides=(2,2),padding='same',activation = None,name="conv_1")
 			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
 
-			x = tf.layers.conv2d(x,filters=128,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_2")
+			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='same',name="conv_3")
 			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
 
-			x = tf.layers.conv2d(x,filters=256,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_3")
+			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='same',name="conv_4")
 			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
 
-			x = tf.layers.conv2d(x,filters=512,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_4")
-			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
-			x = tf.nn.leaky_relu(x)
-
-			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,name="conv_5")
+			x = tf.layers.conv2d(x,filters=1024,kernel_size=5,activation = None,kernel_initializer=tf.glorot_normal_initializer(),strides=2,padding='same',name="conv_5")
 			x = tf.layers.batch_normalization(x,momentum=0.9,gamma_initializer = tf.random_normal_initializer(1., 0.02))
 			x = tf.nn.leaky_relu(x)
 
 			x = tf.layers.flatten(x)
-			x = tf.layers.dense(x,1,activation=tf.nn.sigmoid,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="disc_output")
+
+			#Vanilla-GAN
+			#x = tf.layers.dense(x,1,activation=tf.nn.sigmoid,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="disc_output")
+
+			#Wasserstein
+			x = tf.layers.dense(x,1,activation=None,kernel_initializer=tf.contrib.layers.xavier_initializer(),name="disc_output")
 
 		return x
 
@@ -104,21 +107,30 @@ class CGAN(object):
 		self.Dis_real = self.discriminator(self.input,reuse = False)
 		self.Dis_generator = self.discriminator(self.Gen,reuse = True)
 
+
+		#Gradient penalty
+		self.epsilon = tf.random_uniform([], 0.0, 1.0)
+		self.x_hat = self.epsilon * self.input + (1 - self.epsilon) * self.Gen
+		self.d_hat = self.discriminator(self.x_hat,reuse = True)
+		self.ddx = tf.gradients(self.d_hat, self.x_hat)[0]
+		self.ddx = tf.sqrt(tf.reduce_sum(tf.square(self.ddx), axis=1))
+		self.ddx = tf.reduce_mean(tf.square(self.ddx - 1.0) * self.scaler)
+
+		#Wassersteinmetrik
+		self.d_loss = -tf.reduce_mean(self.Dis_real - self.Dis_generator)
+		self.d_loss = self.d_loss + self.ddx
+		self.g_loss = -tf.reduce_mean(self.Dis_generator)
+
+		#Vanilla BI-GAN Loss
+		#self.d_loss = -tf.reduce_mean(tf.log(self.Dis_real) + tf.log(1. - self.Dis_generator))
+		#self.g_loss = -tf.reduce_mean(tf.log(self.Dis_generator))
+
 		#Tensorboard variables
 		self.d_sum_real = tf.summary.histogram("d_real", self.Dis_real)
 		self.d_sum_fake = tf.summary.histogram("d_fake", self.Dis_generator)
 
 		self.G_sum = tf.summary.histogram("G",self.Gen)
 		self.z_sum = tf.summary.histogram("z_input",self.z)
-
-		#Wassersteinmetrik
-		#self.d_loss = tf.reduce_mean(self.Dis_encoder - self.Dis_generator)
-		#self.g_loss = -tf.reduce_mean(self.Dis_generator - (1 - self.Dis_encoder))
-
-
-		#Vanilla BI-GAN Loss
-		self.d_loss = -tf.reduce_mean(tf.log(self.Dis_real) + tf.log(1. - self.Dis_generator))
-		self.g_loss = -tf.reduce_mean(tf.log(self.Dis_generator))
 
 		tf.summary.scalar('self.g_loss', self.g_loss )
 		tf.summary.scalar('self.d_loss', self.d_loss )
@@ -137,9 +149,9 @@ class CGAN(object):
 	def train(self):
 		with tf.variable_scope("adam",reuse=tf.AUTO_REUSE) as scope:
 			print("init_d_optim")
-			self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1).minimize(self.g_loss,var_list = self.vars_G)
+			self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.g_loss,var_list = self.vars_G)
 			print("init_g_optim")
-			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1).minimize(self.d_loss,var_list = self.vars_D)
+			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.d_loss,var_list = self.vars_D)
 
 			self.init  = tf.global_variables_initializer()
 			self.config = tf.ConfigProto()

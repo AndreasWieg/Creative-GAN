@@ -9,7 +9,7 @@ import sys
 flags = tf.app.flags
 
 flags.DEFINE_integer("epochs",1000,"epochs per trainingstep")
-flags.DEFINE_float("learning_rate",0.00001,"learning rate for the model")
+flags.DEFINE_float("learning_rate",0.0001,"learning rate for the model")
 flags.DEFINE_integer("image_size",128,"Image size of the input")
 flags.DEFINE_bool("training",True,"running training of the poincloud gan")
 flags.DEFINE_string("checkpoint_dir","C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/","where to save the model")
@@ -17,7 +17,7 @@ flags.DEFINE_string("sample_dir","samples","where the samples are stored")
 flags.DEFINE_integer("iterations",100000,"number of patches")
 flags.DEFINE_integer("batch_size",64,"size of the batch")
 flags.DEFINE_float("beta1",0.5,"adam beta1")
-flags.DEFINE_float("beta2",0.5,"adam beta2")
+flags.DEFINE_float("beta2",0.9,"adam beta2")
 flags.DEFINE_integer("z_dim",128,"sample size from the normal distribution for the generator")
 FLAGS = flags.FLAGS
 
