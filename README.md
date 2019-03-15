@@ -9,3 +9,8 @@ learning the style of an artist and creating new paintings
 [Tommy Kny Petzold](https://www.tommy-kny-petzold.de)
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/Die%20Rebellion%20der%20Topfpflanzen.jpg)
+
+After 100 epochs:
+
+![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/100_epoch.jpg)
+
