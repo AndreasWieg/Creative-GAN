@@ -40,17 +40,6 @@ class CGAN(object):
 		self.save_epoch = 0
 		self.build_network()
 
-		with tf.variable_scope("adam",reuse=tf.AUTO_REUSE) as scope:
-			print("init_d_optim")
-			self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.g_loss,var_list = self.vars_G)
-			print("init_g_optim")
-			self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.d_loss,var_list = self.vars_D)
-
-		self.init  = tf.global_variables_initializer()
-		self.config = tf.ConfigProto()
-		self.config.gpu_options.allow_growth = True
-		self.sess = tf.Session(config = self.config)
-
 	def generator(self,x):
 		with tf.variable_scope("generator") as scope:
 
@@ -147,15 +136,21 @@ class CGAN(object):
 		tf.summary.scalar('self.d_loss', self.d_loss )
 
 		#collect generator and encoder variables
-		t_vars = tf.trainable_variables()
 		self.vars_G = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='generator')
 		self.vars_D = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='discriminator')
+
+		print("init_d_optim")
+		self.g_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.g_loss,var_list = self.vars_G)
+		print("init_g_optim")
+		self.d_optim = tf.train.AdamOptimizer(self.learning_rate, beta1 = self.beta1,beta2 = self.beta2).minimize(self.d_loss,var_list = self.vars_D)
 
 		self.saver = tf.train.Saver()
 
 		#Tensorboard variables
 		self.summary_g_loss = tf.summary.scalar("g_loss",self.g_loss)
 		self.summary_d_loss = tf.summary.scalar("d_loss",self.d_loss)
+
+
 
 
 	def save_model(self, iter_time):
@@ -165,19 +160,22 @@ class CGAN(object):
 		print('             Model saved!            ')
 		print('=====================================\n')
 
+
 	def train(self):
+		self.config = tf.ConfigProto()
+		self.config.gpu_options.allow_growth = True
+		self.sess = tf.Session(config = self.config)
+
 		with self.sess:
 			if self.load_model():
 				print(' [*] Load SUCCESS!\n')
 			else:
 				print(' [!] Load Failed...\n')
-			#imported_meta = tf.train.import_meta_graph("C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt-4.meta")
-			#imported_meta.restore(sess, "C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/checkpoint/model.ckpt-4")
+				self.sess.run(tf.global_variables_initializer())
+
 			train_writer = tf.summary.FileWriter("./logs",self.sess.graph)
 			merged = tf.summary.merge_all()
-			#test_writer = tf.summary.FileWriter("C:/Users/Andreas/Desktop/punktwolkenplot/pointgan/")
 			self.counter = 1
-			self.sess.run(self.init)
 			self.training_data = load_data_art()
 			print(self.training_data.shape)
 			k = (len(self.training_data) // self.batch_size)
