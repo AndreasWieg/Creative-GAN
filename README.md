@@ -20,3 +20,5 @@ After 100 epochs:
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/100_epoch.jpg)
 
+<iframe src="https://giphy.com/embed/uAC9Ls4VuXhlhVGuDg" width="480" height="480" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/uAC9Ls4VuXhlhVGuDg">via GIPHY</a></p>
+
