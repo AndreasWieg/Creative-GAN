@@ -20,5 +20,5 @@ After 100 epochs:
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/100_epoch.jpg)
 
-![](Creative-GAN/blob/master/example/name-of-giphy.gif)
+![](example/name-of-giphy.gif)
 
