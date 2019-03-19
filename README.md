@@ -20,5 +20,7 @@ After 100 epochs:
 
 ![alt text](https://github.com/AndreasWieg/Creative-GAN/blob/master/example/100_epoch.jpg)
 
+Evolution from 0 to 1000 epochs
+
 ![](example/0-1000.gif)
 
